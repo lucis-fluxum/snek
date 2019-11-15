@@ -6,6 +6,8 @@ authors = ["Luc Street <lucis-fluxum@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+requests = "^2.22"
+packaging = "^19.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
