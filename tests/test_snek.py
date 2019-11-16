@@ -3,3 +3,6 @@ from snek import __version__
 
 def test_version():
     assert __version__ == '0.1.0'
+
+# fetches dependencies with valid markers
+# fetches dependencies with valid extras
