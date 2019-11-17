@@ -15,13 +15,16 @@ class Resolver:
         self._dependencies: Dict[Requirement, Dict] = {}
 
     def get_requirements(self) -> List[Requirement]:
-        metadata: dict = requests.get(f"{REPOSITORY_URL}/pypi/{self._requirement.name}/json").json()
+        metadata = self.fetch_requirement(self._requirement.name)
         requires_dist: List[str] = metadata['info']['requires_dist']
         if requires_dist and len(requires_dist) > 0:
             reqs = [Requirement(dep) for dep in requires_dist]
             return [req for req in reqs if not req.marker or self.evaluate_marker(req.marker)]
         else:
             return []
+
+    def fetch_requirement(self, name: str) -> dict:
+        return requests.get(f"{REPOSITORY_URL}/pypi/{name}/json").json()
 
     def evaluate_marker(self, marker: Marker) -> bool:
         for extra in self._extras:
