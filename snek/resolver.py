@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures.thread import ThreadPoolExecutor
 from functools import reduce
 from pprint import pp
 from typing import List, Dict, Optional, Set
@@ -92,6 +93,10 @@ class Resolver:
                     return False
             return False
 
+    def get_best_versions(self) -> List[Version]:
+        with ThreadPoolExecutor() as executor:
+            return list(executor.map(lambda r: max(Resolver.get_compatible_versions(r)), self.dependencies))
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -101,3 +106,4 @@ if __name__ == '__main__':
     resolver = Resolver(Requirement('Flask[dev]'))
     print('Final list of dependencies:')
     pp(resolver.dependencies)
+    pp(resolver.get_best_versions())
