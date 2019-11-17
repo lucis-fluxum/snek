@@ -1,9 +1,12 @@
 import logging
+from functools import reduce
+from pprint import pp
 from typing import List, Dict, Optional
 
 import requests
 from packaging.markers import Marker, UndefinedEnvironmentName
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 REPOSITORY_URL = 'https://pypi.org'
@@ -45,13 +48,17 @@ class Resolver:
                 if compatible_versions:
                     existing_requirement.specifier = existing_requirement.specifier & new_requirement.specifier
                     log.debug(f"Requirement added: {str(existing_requirement)}")
+                    return
                 else:
                     log.critical(f"No compatible versions found for {new_requirement.name}.")
 
-    def get_compatible_versions(self, existing_requirement, new_requirement):
-        available_versions: Dict[str, list] = self.fetch_requirement(existing_requirement.name)['releases']
-        return [Version(v) for v in available_versions
-                if v in existing_requirement.specifier & new_requirement.specifier]
+    def get_compatible_versions(self, *requirements: Requirement):
+        if not requirements:
+            raise RuntimeError('No requirements given.')
+        name = requirements[0].name
+        available_versions: Dict[str, list] = self.fetch_requirement(name)['releases']
+        merged_requirements = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
+        return [Version(v) for v in available_versions if v in merged_requirements]
 
     def evaluate_marker(self, marker: Optional[Marker]) -> bool:
         try:
@@ -68,6 +75,7 @@ class Resolver:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    r = Resolver(Requirement('Flask[dev]'))
-    r._dependencies = r.get_requirements()
-    r.add_new_requirement(Requirement('Werkzeug <= 0.15.6; extra == "dev"'))
+    resolver = Resolver(Requirement('Flask[dev]'))
+    resolver._dependencies = resolver.get_requirements()
+    resolver.add_new_requirement(Requirement('Werkzeug <= 0.15.6; extra == "dev"'))
+    pp(resolver._dependencies)

@@ -55,3 +55,15 @@ class TestResolver:
             assert resolver.evaluate_marker(windows_marker)
         else:
             assert not resolver.evaluate_marker(windows_marker)
+
+    def test_get_compatible_versions(self, mocker):
+        resolver = Resolver(Requirement('Flask'))
+        mock_fetch_requirement(mocker, resolver)
+        assert len(resolver.get_compatible_versions(Requirement('Flask'))) == 32
+        assert len(resolver.get_compatible_versions(Requirement('Flask'),
+                                                    Requirement('Flask > 1.0'))) == 6
+        assert len(resolver.get_compatible_versions(Requirement('Flask'),
+                                                    Requirement('Flask > 1.0'),
+                                                    Requirement('Flask <= 1.1'))) == 5
+        assert len(resolver.get_compatible_versions(Requirement('Flask'),
+                                                    Requirement('Flask ~= 1.0'))) == 7
