@@ -27,7 +27,11 @@ class Resolver:
             return []
 
     def fetch_requirement(self, name: str) -> dict:
-        return requests.get(f"{REPOSITORY_URL}/pypi/{name}/json").json()
+        response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/json")
+        if response:
+            return response.json()
+        else:
+            raise RuntimeError(f"Package not found: {name}")
 
     def add_new_requirement(self, new_requirement: Requirement):
         if not self.evaluate_marker(new_requirement.marker):
