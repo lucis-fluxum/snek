@@ -1,4 +1,3 @@
-from concurrent.futures.thread import ThreadPoolExecutor
 from pprint import pp
 from typing import List, Dict
 
@@ -6,7 +5,7 @@ import requests
 from packaging.markers import Marker, UndefinedEnvironmentName
 from packaging.requirements import Requirement
 
-REPOSITORY_URL = 'https://www.pypi.org'
+REPOSITORY_URL = 'https://pypi.org'
 
 
 class Resolver:
@@ -15,19 +14,14 @@ class Resolver:
         self._extras = self._requirement.extras
         self._dependencies: Dict[Requirement, Dict] = {}
 
-    def fetch_dependencies(self) -> Dict[Requirement, Dict]:
-        # Adding the \n removes the extra time it takes to flush the buffer, when another message could have already
-        # been printed.
-        print(f"Fetching deps for {str(self._requirement)}...\n", end='')
-        json: dict = requests.get(f"{REPOSITORY_URL}/pypi/{self._requirement.name}/json").json()
-        deps: List[str] = json['info']['requires_dist']
-
-        if deps and len(deps) > 0:
-            reqs = [Requirement(dep) for dep in deps]
-            reqs = [req for req in reqs if not req.marker or self.evaluate_marker(req.marker)]
-            with ThreadPoolExecutor() as executor:
-                executor.map(lambda req: self._dependencies.__setitem__(req, Resolver(req).fetch_dependencies()), reqs)
-        return self._dependencies
+    def get_requirements(self) -> List[Requirement]:
+        metadata: dict = requests.get(f"{REPOSITORY_URL}/pypi/{self._requirement.name}/json").json()
+        requires_dist: List[str] = metadata['info']['requires_dist']
+        if requires_dist and len(requires_dist) > 0:
+            reqs = [Requirement(dep) for dep in requires_dist]
+            return [req for req in reqs if not req.marker or self.evaluate_marker(req.marker)]
+        else:
+            return []
 
     def evaluate_marker(self, marker: Marker) -> bool:
         for extra in self._extras:
@@ -40,4 +34,4 @@ class Resolver:
 
 
 if __name__ == '__main__':
-    pp(Resolver(Requirement('sphinx')).fetch_dependencies())
+    pp(Resolver(Requirement('Flask[dev]')).get_requirements())
