@@ -44,8 +44,9 @@ class TestResolver:
             assert resolver_multi_extra.evaluate_marker(Marker(f"extra == '{extra}'"))
 
     def test_evaluate_marker(self, make_resolver):
-        windows_marker = Marker('sys_platform=="win32"')
         resolver = make_resolver('Flask')
+        assert resolver.evaluate_marker(None)
+        windows_marker = Marker('sys_platform=="win32"')
         if sys.platform == 'win32':
             assert resolver.evaluate_marker(windows_marker)
         else:
