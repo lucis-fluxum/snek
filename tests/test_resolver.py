@@ -20,11 +20,11 @@ FLASK_DOCS_REQUIREMENTS = FLASK_REQUIREMENTS.union({'sphinx; extra == "docs"', '
 FLASK_ALL_REQUIREMENTS = FLASK_REQUIREMENTS.union(FLASK_DEV_REQUIREMENTS).union(FLASK_DOCS_REQUIREMENTS)
 
 
-def mock_fetch_requirement(mocker, resolver):
+def mock_fetch_requirement(mocker):
     metadatas = {
         'Flask': json.loads(load_fixture('pypi_Flask.json'))
     }
-    mocker.patch.object(resolver, 'fetch_requirement', side_effect=metadatas.__getitem__)
+    mocker.patch('snek.resolver.Resolver.fetch_requirement', side_effect=metadatas.__getitem__)
 
 
 class TestResolver:
@@ -33,7 +33,7 @@ class TestResolver:
                               ('Flask[docs]', FLASK_DOCS_REQUIREMENTS), ('Flask[dev, docs]', FLASK_ALL_REQUIREMENTS)])
     def test_get_requirements(self, mocker, req_str, expected_reqs):
         resolver = Resolver(Requirement(req_str))
-        mock_fetch_requirement(mocker, resolver)
+        mock_fetch_requirement(mocker)
         requirements = map(str, resolver.get_requirements())
         assert set(requirements) == expected_reqs
 
@@ -58,7 +58,7 @@ class TestResolver:
 
     def test_get_compatible_versions(self, mocker):
         resolver = Resolver(Requirement('Flask'))
-        mock_fetch_requirement(mocker, resolver)
+        mock_fetch_requirement(mocker)
         assert len(resolver.get_compatible_versions(Requirement('Flask'))) == 32
         assert len(resolver.get_compatible_versions(Requirement('Flask'),
                                                     Requirement('Flask > 1.0'))) == 6
