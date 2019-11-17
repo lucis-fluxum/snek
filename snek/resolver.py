@@ -32,9 +32,13 @@ class Resolver:
         merged_requirements = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
         return [Version(v) for v in available_versions if v in merged_requirements]
 
-    def __init__(self, requirement: Optional[Requirement] = None,
-                 extras: Set[str] = {},
-                 dependencies: List[Requirement] = []):
+    def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
+                 dependencies: Optional[List[Requirement]] = None):
+        if extras is None:
+            extras = {}
+        if dependencies is None:
+            dependencies = []
+
         self.dependencies: List[Requirement] = dependencies
         self._requirement = requirement
         self._extras = extras
@@ -57,7 +61,7 @@ class Resolver:
             return
 
         if new_requirement.name not in map(lambda r: r.name, self.dependencies):
-            print(f"Adding {new_requirement}...")
+            log.debug(f"Adding {new_requirement}...")
             if Resolver.get_compatible_versions(new_requirement):
                 self.dependencies.append(new_requirement)
                 for sub_requirement in self.get_sub_requirements(new_requirement):
@@ -90,8 +94,10 @@ class Resolver:
 
 
 if __name__ == '__main__':
-    # logging.basicConfig(level=logging.DEBUG)
-    resolver = Resolver()
-    resolver.add_new_requirement(Requirement('Flask'))
+    logging.basicConfig(level=logging.DEBUG)
+    # Suppress debug messages from urllib3
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+
+    resolver = Resolver(Requirement('Flask[dev]'))
     print('Final list of dependencies:')
     pp(resolver.dependencies)
