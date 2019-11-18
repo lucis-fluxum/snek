@@ -31,7 +31,7 @@ FLASK_ALL_REQUIREMENTS = FLASK_REQUIREMENTS.union(FLASK_DEV_REQUIREMENTS).union(
 
 def mock_fetch_requirement(mocker):
     mocker.patch('snek.resolver.Resolver.fetch_metadata',
-                 side_effect=lambda name: json.loads(load_fixture(f"json/pypi_{name}.json")))
+                 side_effect=lambda name, version=None: json.loads(load_fixture(f"json/pypi_{name}.json")))
 
 
 class TestResolver:

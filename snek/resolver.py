@@ -17,8 +17,11 @@ log = logging.getLogger(__name__)
 
 class Resolver:
     @staticmethod
-    def fetch_metadata(name: str) -> dict:
-        response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/json")
+    def fetch_metadata(name: str, version: Optional[Version] = None) -> dict:
+        if version:
+            response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/{version}/json")
+        else:
+            response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/json")
         if response:
             return response.json()
         else:
@@ -32,6 +35,10 @@ class Resolver:
         available_versions: Dict[str, list] = Resolver.fetch_metadata(name)['releases']
         merged_requirements = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
         return [Version(v) for v in available_versions if v in merged_requirements]
+
+    @staticmethod
+    def get_best_version(requirement: Requirement):
+        return max(Resolver.get_compatible_versions(requirement))
 
     def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
                  dependencies: Optional[List[Requirement]] = None):
@@ -48,7 +55,7 @@ class Resolver:
             self.add_new_requirement(requirement)
 
     def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
-        metadata = Resolver.fetch_metadata(requirement.name)
+        metadata = Resolver.fetch_metadata(requirement.name, Resolver.get_best_version(requirement))
         requires_dist: List[str] = metadata['info']['requires_dist']
         if requires_dist and len(requires_dist) > 0:
             reqs = [Requirement(dep) for dep in requires_dist]
@@ -101,7 +108,7 @@ class Resolver:
 
     def get_best_versions(self) -> List[Version]:
         with ThreadPoolExecutor() as executor:
-            return list(executor.map(lambda r: max(Resolver.get_compatible_versions(r)), self.dependencies))
+            return list(executor.map(Resolver.get_best_version, self.dependencies))
 
 
 if __name__ == '__main__':
@@ -109,6 +116,6 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('jupyterlab'))
+    resolver = Resolver(Requirement('notebook[test]==5.0.0'))
     print('Finding best versions...')
     pp(list(zip(resolver.dependencies, resolver.get_best_versions())))
