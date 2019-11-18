@@ -6,9 +6,10 @@ from typing import List, Dict, Optional, Set
 
 import requests
 from packaging.markers import Marker, UndefinedEnvironmentName
-from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+
+from snek.requirement import Requirement
 
 REPOSITORY_URL = 'https://pypi.org'
 
