@@ -36,15 +36,15 @@ class Resolver:
     def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
                  dependencies: Optional[List[Requirement]] = None):
         if extras is None:
-            extras = {}
+            extras: Set[str] = set()
         if dependencies is None:
-            dependencies = []
+            dependencies: List[Requirement] = []
 
-        self.dependencies: List[Requirement] = dependencies
+        self.dependencies = dependencies
         self._requirement = requirement
         self._extras = extras
         if requirement:
-            self._extras = requirement.extras
+            self._extras: Set[str] = requirement.extras
             self.add_new_requirement(requirement)
 
     def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
@@ -109,6 +109,6 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('Flask[dev]'))
+    resolver = Resolver(Requirement('jupyterlab'))
     print('Finding best versions...')
     pp(list(zip(resolver.dependencies, resolver.get_best_versions())))
