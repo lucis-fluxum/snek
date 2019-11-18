@@ -23,6 +23,46 @@ log = logging.getLogger(__name__)
 # TODO: Check installed package versions (from pip freeze) so you can skip them if needed
 # TODO: Abstract out the repository you're using to fetch metadata
 class Resolver:
+    """
+    TODO: Everything described here.
+    This is a process that requires several phases:
+
+    1. Find compatible versions for the root requirement.
+
+    2. Starting from the largest compatible version: get a list of sub-requirements, then for each sub-requirement, get
+       a list of compatible versions.
+
+    3. For each sub-requirement, starting at the largest compatible version, repeat this process of getting candidate
+       versions recursively, until there are no more sub-requirements. If there are no compatible versions of any
+       sub-requirement, throw an error to change the best compatible version of its parent and try again. If there are
+       no more candidate versions in the parent, throw an error to change the best compatible version of the parent's
+       parent, and so on. If there are no more candidate versions to test at the top of the tree, throw another error.
+
+    4. While performing this process, it is possible to encounter a circular dependency, a sub-requirement with the same
+       package name as one elsewhere in the dependency tree. If this occurs:
+         - Intersect the candidate versions for the new dependency with the candidate versions for the existing one. If
+           there is at least one compatible version between them, then we can keep the dependency. Merge the specifier
+           of the circular dependency with that of the existing one and remove the circular dependency from the tree.
+         - If there are no compatible versions between the two dependencies, throw an error to change the version of the
+           circular dependency's parent and try again.
+
+    5. Once this has finished, if we've encountered any circular dependencies, we need to recalculate their
+       sub-requirements, since the best compatible version may have changed. Repeat steps 2-4 for requirements whose
+       best candidate versions have changed after being merged.
+
+    6. Now we should have a tree of many dependencies, each with a list of one or more compatible candidate versions.
+       There should be no obvious conflicts. Starting from the deepest dependencies, install the best candidate version
+       for each one using pip install --no-deps
+
+    Note: Some packages on PyPI have no dependencies listed, but do contain some install_requires in their setup.py.
+    If that setup.py requires a different version of another package that you've already installed, running the setup.py
+    will OVERWRITE your version of that other package with the version required by setup.py. If you install BOTH the
+    packages at the same time, one with setup.py (package A) and another version of a package it depends on (package B),
+    pip will display an error warning the user that the version of package B they install will not be compatible with
+    the version of package B that package A depends on. This is the default behavior of poetry, but it does not display
+    the error from pip.
+    """
+
     @staticmethod
     def fetch_metadata(name: str, version: Optional[Version] = None) -> dict:
         if version:
