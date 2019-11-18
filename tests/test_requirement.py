@@ -26,3 +26,11 @@ class TestRequirement:
         assert not r1.has_child(r2)
         r2 = r1.add_sub_requirement(r2)
         assert r1.has_child(r2)
+
+    def test_equality(self):
+        r1 = Requirement('Flask')
+        r2 = Requirement('Flask')
+        r3 = Requirement('bidict')
+        assert r1 == r2
+        assert r1 != r3
+        assert len({r1, r2, r3}) == 2
