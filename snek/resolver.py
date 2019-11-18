@@ -65,8 +65,7 @@ class Resolver:
             log.debug(f"Adding {new_requirement}...")
             if Resolver.get_compatible_versions(new_requirement):
                 self.dependencies.append(new_requirement)
-                for sub_requirement in self.get_sub_requirements(new_requirement):
-                    self.add_new_requirement(sub_requirement)
+                self.add_sub_requirements(new_requirement)
             else:
                 raise RuntimeError(f"No compatible versions found for {new_requirement.name}.")
         else:
@@ -80,6 +79,13 @@ class Resolver:
                         return
                     else:
                         raise RuntimeError(f"No compatible versions found for {new_requirement.name}.")
+
+    def add_sub_requirements(self, requirement: Requirement):
+        for sub_requirement in self.get_sub_requirements(requirement):
+            if self.evaluate_marker(sub_requirement.marker):
+                sub_requirement.marker = None
+                sub_resolver = Resolver(sub_requirement, dependencies=self.dependencies)
+                self.dependencies = sub_resolver.dependencies
 
     def evaluate_marker(self, marker: Optional[Marker]) -> bool:
         try:
@@ -104,6 +110,5 @@ if __name__ == '__main__':
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
     resolver = Resolver(Requirement('Flask[dev]'))
-    print('Final list of dependencies:')
-    pp(resolver.dependencies)
-    pp(resolver.get_best_versions())
+    print('Finding best versions...')
+    pp(list(zip(resolver.dependencies, resolver.get_best_versions())))
