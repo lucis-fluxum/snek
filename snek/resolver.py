@@ -15,6 +15,12 @@ REPOSITORY_URL = 'https://pypi.org'
 log = logging.getLogger(__name__)
 
 
+# TODO: 'Actions' to perform install/uninstall/update/other tasks
+# TODO: Lock file so we don't need to resolve every time. Put a hash in the lockfile of the requirements
+#       manifest so we know when to expire it
+# TODO: Record dependencies in lock file even if they're not compatible with current environment
+# TODO: Check installed package versions (from pip freeze) so you can skip them if needed
+# TODO: Abstract out the repository you're using to fetch metadata
 class Resolver:
     @staticmethod
     def fetch_metadata(name: str, version: Optional[Version] = None) -> dict:
