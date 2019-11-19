@@ -74,7 +74,6 @@ class Resolver:
         self._repository = repository
         if requirement:
             self._extras: Set[str] = requirement.extras
-            # self.add_new_requirement(requirement)
 
     # TODO: Test this new behavior
     def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
@@ -98,29 +97,24 @@ class Resolver:
     def resolve_sub_requirement(self, sub_req_string):
         sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
 
-        if not self.evaluate_marker(sub_requirement.marker):
-            log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
+        if not self.check_marker_for_extra(sub_requirement.marker):
+            log.warning(f"Ignoring {sub_requirement}.")
         elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
+            chain = reversed(list(map(str, sub_requirement.ancestors())))
             log.warning(
-                f"Circular dependency detected: {' -> '.join(reversed(sub_requirement.ancestors()))} -> {sub_requirement}")
+                f"Circular dependency detected: {' -> '.join(chain)} -> {sub_requirement}")
         else:
-            # TODO: Check if we need to set the marker on the sub requirement to None, since we're entering a new
-            #       resolver context
             sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
             sub_resolver.resolve()
             self._requirement.add_sub_requirement(sub_resolver._requirement)
 
-    def evaluate_marker(self, marker: Optional[Marker]) -> bool:
-        try:
-            return marker is None or marker.evaluate()
-        except UndefinedEnvironmentName:
-            for extra in self._extras:
-                try:
-                    if marker.evaluate({'extra': extra}):
-                        return True
-                except UndefinedEnvironmentName:
-                    return False
-            return False
+    def check_marker_for_extra(self, marker: Optional[Marker]) -> bool:
+        if 'extra' not in str(marker):
+            return True
+        for extra in self._extras:
+            if f"extra==\"{extra}\"" in str(marker).replace(' ', ''):
+                return True
+        return False
 
 
 if __name__ == '__main__':
@@ -128,7 +122,7 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('jupyterlab'))
+    resolver = Resolver(Requirement('Flask[dev]'))
     import json
 
     print(json.dumps(resolver.resolve(stringify_keys=True), sort_keys=True, indent=4))

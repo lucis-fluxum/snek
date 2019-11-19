@@ -43,22 +43,23 @@ class TestResolver:
 
     def test_evaluate_extra(self):
         resolver_no_extra = Resolver()
-        assert not resolver_no_extra.evaluate_marker(Marker("extra == 'dev'"))
+        assert not resolver_no_extra.check_marker_for_extra(Marker("extra == 'dev'"))
         resolver_one_extra = Resolver(extras={'dev'})
-        assert resolver_one_extra.evaluate_marker(Marker("extra == 'dev'"))
-        assert not resolver_one_extra.evaluate_marker(Marker("extra == 'another'"))
+        assert resolver_one_extra.check_marker_for_extra(Marker("extra == 'dev'"))
+        assert not resolver_one_extra.check_marker_for_extra(Marker("extra == 'another'"))
         resolver_multi_extra = Resolver(extras={'dev', 'test', 'another'})
         for extra in ['dev', 'test', 'another']:
-            assert resolver_multi_extra.evaluate_marker(Marker(f"extra == '{extra}'"))
+            assert resolver_multi_extra.check_marker_for_extra(Marker(f"extra == '{extra}'"))
 
-    def test_evaluate_marker(self):
-        resolver = Resolver()
-        assert resolver.evaluate_marker(None)
-        windows_marker = Marker('sys_platform=="win32"')
-        if sys.platform == 'win32':
-            assert resolver.evaluate_marker(windows_marker)
-        else:
-            assert not resolver.evaluate_marker(windows_marker)
+    # TODO: Evaluate the marker when deciding exactly what to install
+    # def test_evaluate_marker(self):
+    #     resolver = Resolver()
+    #     assert resolver.test_evaluate_marker(None)
+    #     windows_marker = Marker('sys_platform=="win32"')
+    #     if sys.platform == 'win32':
+    #         assert resolver.test_evaluate_marker(windows_marker)
+    #     else:
+    #         assert not resolver.test_evaluate_marker(windows_marker)
 
     # TODO: Replace these tests with the following:
     #       - Don't add existing requirement: store list of dependencies in a set
