@@ -1,11 +1,11 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from pprint import pp
 from typing import List, Optional, Set
 
 from packaging.markers import Marker, UndefinedEnvironmentName
 from packaging.version import Version
 
+from snek import utils
 from snek.repository import Repository
 from snek.requirement import Requirement
 
@@ -75,7 +75,31 @@ class Resolver:
         self._repository = repository
         if requirement:
             self._extras: Set[str] = requirement.extras
-            self.add_new_requirement(requirement)
+            # self.add_new_requirement(requirement)
+
+    def resolve(self):
+        log.debug(f"Populating {self._requirement}")
+        self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name)
+        self._requirement.compatible_versions = self._repository.get_compatible_versions(self._requirement)
+        self._requirement.best_candidate_version = max(self._requirement.compatible_versions)
+
+        current_version = utils.convert_to_version(self._requirement.project_metadata['info']['version'])
+        if current_version != self._requirement.best_candidate_version:
+            self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name,
+                                                                                   self._requirement.best_candidate_version)
+        requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
+
+        if requires_dist and len(requires_dist) > 0:
+            for sub_req_string in requires_dist:
+                sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
+
+                # Make sure we're adding a requirement that's compatible with the current environment
+                if self.evaluate_marker(sub_requirement.marker):
+                    sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
+                    sub_resolver.resolve()
+                    self._requirement.add_sub_requirement(sub_resolver._requirement)
+                else:
+                    log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
 
     def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
         metadata = self._repository.get_package_info(requirement.name,
@@ -142,6 +166,6 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('notebook[test]==5.0.0'))
-    print('Finding best versions...')
-    pp(list(zip(resolver.dependencies, resolver.get_best_versions())))
+    resolver = Resolver(Requirement('Flask[dev]'))
+    resolver.resolve()
+    print(list(map(lambda d: d._children, resolver._requirement._children)))

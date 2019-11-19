@@ -36,6 +36,7 @@ class Repository:
     def get_package_releases(self, package_name: str) -> Dict[str, list]:
         return self.get_package_info(package_name)['releases']
 
+    # Assumption: first requirement should have metadata or else I'll go and get it myself
     def get_compatible_versions(self, *requirements: Requirement) -> List[Union[LegacyVersion, Version]]:
         if not requirements:
             raise InvalidRequirementError('No requirements given.')
@@ -44,6 +45,9 @@ class Repository:
             raise InvalidRequirementError(f"Requirements must have the same package name. Names provided: {names}")
 
         name = names.pop()
-        all_versions = map(utils.convert_to_version, self.get_package_releases(name).keys())
+        if requirements[0].project_metadata:
+            all_versions = map(utils.convert_to_version, requirements[0].project_metadata['releases'].keys())
+        else:
+            all_versions = map(utils.convert_to_version, self.get_package_releases(name).keys())
         final_specifier = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
         return list(final_specifier.filter(all_versions))
