@@ -1,4 +1,3 @@
-import json
 import sys
 
 import pytest
@@ -6,7 +5,7 @@ from packaging.markers import Marker
 from packaging.requirements import Requirement
 
 from snek.resolver import Resolver
-from tests.conftest import load_fixture
+from tests.conftest import mock_repository_json
 
 FLASK_REQUIREMENTS = {'Werkzeug>=0.15', 'Jinja2>=2.10.1', 'itsdangerous>=0.24', 'click>=5.1'}
 # This includes a version of Flask itself
@@ -29,11 +28,6 @@ FLASK_DOCS_REQUIREMENTS = FLASK_REQUIREMENTS.union({'sphinx; extra == "docs"', '
 FLASK_ALL_REQUIREMENTS = FLASK_REQUIREMENTS.union(FLASK_DEV_REQUIREMENTS).union(FLASK_DOCS_REQUIREMENTS)
 
 
-def mock_fetch_requirement(mocker):
-    mocker.patch('snek.resolver.Resolver.fetch_metadata',
-                 side_effect=lambda name, version=None: json.loads(load_fixture(f"json/pypi_{name}.json")))
-
-
 class TestResolver:
     @pytest.mark.parametrize('req_str, extras, expected_reqs',
                              [('Flask', {}, FLASK_REQUIREMENTS),
@@ -41,7 +35,7 @@ class TestResolver:
                               ('Flask[docs]', {'docs'}, FLASK_DOCS_REQUIREMENTS),
                               ('Flask[dev, docs]', {'dev', 'docs'}, FLASK_ALL_REQUIREMENTS)])
     def test_get_sub_requirements(self, mocker, req_str, extras, expected_reqs):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver(extras=extras)
         requirements = map(str, resolver.get_sub_requirements(Requirement(req_str)))
         assert set(requirements) == expected_reqs
@@ -65,59 +59,46 @@ class TestResolver:
         else:
             assert not resolver.evaluate_marker(windows_marker)
 
-    def test_get_compatible_versions(self, mocker):
-        mock_fetch_requirement(mocker)
-        resolver = Resolver()
-        assert len(resolver.get_compatible_versions(Requirement('Flask'))) == 32
-        assert len(resolver.get_compatible_versions(Requirement('Flask'),
-                                                    Requirement('Flask > 1.0'))) == 6
-        assert len(resolver.get_compatible_versions(Requirement('Flask'),
-                                                    Requirement('Flask > 1.0'),
-                                                    Requirement('Flask <= 1.1'))) == 5
-        assert len(resolver.get_compatible_versions(Requirement('Flask'),
-                                                    Requirement('Flask ~= 1.0'))) == 7
-        assert len(resolver.get_compatible_versions(Requirement('Flask > 1'),
-                                                    Requirement('Flask < 1'))) == 0
-
-    def test_dont_add_existing_requirement(self):
+    def test_dont_add_existing_requirement(self, mocker):
+        mock_repository_json(mocker)
         resolver = Resolver(dependencies=[Requirement('Flask')])
         assert len(resolver.dependencies) == 1
         resolver.add_new_requirement(Requirement('Flask'))
         assert len(resolver.dependencies) == 1
 
     def test_add_new_requirement(self, mocker):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver()
         assert len(resolver.dependencies) == 0
         resolver.add_new_requirement(Requirement('Flask'))
         assert len(resolver.dependencies) == 6
 
     def test_add_sub_requirements(self, mocker):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver()
         resolver.add_sub_requirements(Requirement('Flask'))
         # Length is 1 less than in test_add_new_requirement
         assert len(resolver.dependencies) == 5
 
     def test_add_new_requirement_many_sub_requirements(self, mocker):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver(extras={'dev'})
         resolver.add_new_requirement(Requirement('Flask'))
         assert len(resolver.dependencies) == 47
 
     def test_add_new_requirement_on_init(self, mocker):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver(Requirement('Flask'))
         assert len(resolver.dependencies) == 6
         resolver = Resolver(Requirement('Flask[dev]'))
         assert len(resolver.dependencies) == 47
 
     def test_get_best_versions(self, mocker):
-        mock_fetch_requirement(mocker)
+        mock_repository_json(mocker)
         resolver = Resolver(Requirement('Flask'))
         best_versions = map(str, resolver.get_best_versions())
         assert list(best_versions) == FLASK_REQUIREMENTS_VERSIONS
 
         resolver = Resolver(Requirement('Flask[dev]'))
-        best_versions = map(str, resolver.get_best_versions())
-        assert list(best_versions) == FLASK_DEV_REQUIREMENTS_VERSIONS
+        best_versions = list(map(str, resolver.get_best_versions()))
+        assert best_versions == FLASK_DEV_REQUIREMENTS_VERSIONS

@@ -9,10 +9,11 @@ def load_fixture(filename):
         return f.read()
 
 
-def mock_requests_json(mocker, json):
-    return mocker.patch('snek.resolver.requests.get', return_value=mocker.Mock(**{'json.return_value': json}))
+def mock_repository_json(mocker):
+    mocker.patch('snek.repository.Repository.get_package_info',
+                 side_effect=lambda name, version=None: json.loads(load_fixture(f"json/pypi_{name.lower()}.json")))
 
 
 @pytest.fixture
 def pypi_flask_json():
-    return json.loads(load_fixture('pypi_Flask.json'))
+    return json.loads(load_fixture('pypi_flask.json'))

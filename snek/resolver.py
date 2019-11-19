@@ -1,14 +1,12 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from functools import reduce
 from pprint import pp
-from typing import List, Dict, Optional, Set
+from typing import List, Optional, Set
 
-import requests
 from packaging.markers import Marker, UndefinedEnvironmentName
-from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from snek.repository import Repository
 from snek.requirement import Requirement
 
 REPOSITORY_URL = 'https://pypi.org'
@@ -21,7 +19,6 @@ log = logging.getLogger(__name__)
 #       manifest so we know when to expire it
 # TODO: Record dependencies in lock file even if they're not compatible with current environment
 # TODO: Check installed package versions (from pip freeze) so you can skip them if needed
-# TODO: Abstract out the repository you're using to fetch metadata
 class Resolver:
     """
     TODO: Everything described here.
@@ -63,46 +60,26 @@ class Resolver:
     the error from pip.
     """
 
-    @staticmethod
-    def fetch_metadata(name: str, version: Optional[Version] = None) -> dict:
-        if version:
-            response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/{version}/json")
-        else:
-            response = requests.get(f"{REPOSITORY_URL}/pypi/{name}/json")
-        if response:
-            return response.json()
-        else:
-            raise RuntimeError(f"Package not found: {name}")
-
-    @staticmethod
-    def get_compatible_versions(*requirements: Requirement):
-        if not requirements:
-            raise RuntimeError('No requirements given.')
-        name = requirements[0].name
-        available_versions: Dict[str, list] = Resolver.fetch_metadata(name)['releases']
-        merged_requirements = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
-        return [Version(v) for v in available_versions if v in merged_requirements]
-
-    @staticmethod
-    def get_best_version(requirement: Requirement):
-        return max(Resolver.get_compatible_versions(requirement))
-
     def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
-                 dependencies: Optional[List[Requirement]] = None):
+                 dependencies: Optional[List[Requirement]] = None, repository: Optional[Repository] = None):
         if extras is None:
             extras: Set[str] = set()
         if dependencies is None:
             dependencies: List[Requirement] = []
+        if repository is None:
+            repository = Repository()
 
         self.dependencies = dependencies
         self._requirement = requirement
         self._extras = extras
+        self._repository = repository
         if requirement:
             self._extras: Set[str] = requirement.extras
             self.add_new_requirement(requirement)
 
     def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
-        metadata = Resolver.fetch_metadata(requirement.name, Resolver.get_best_version(requirement))
+        metadata = self._repository.get_package_info(requirement.name,
+                                                     max(self._repository.get_compatible_versions(requirement)))
         requires_dist: List[str] = metadata['info']['requires_dist']
         if requires_dist and len(requires_dist) > 0:
             reqs = [Requirement(dep) for dep in requires_dist]
@@ -117,7 +94,7 @@ class Resolver:
 
         if new_requirement.name not in map(lambda r: r.name, self.dependencies):
             log.debug(f"Adding {new_requirement}...")
-            if Resolver.get_compatible_versions(new_requirement):
+            if self._repository.get_compatible_versions(new_requirement):
                 self.dependencies.append(new_requirement)
                 self.add_sub_requirements(new_requirement)
             else:
@@ -125,7 +102,8 @@ class Resolver:
         else:
             for existing_requirement in self.dependencies:
                 if existing_requirement.name.lower() == new_requirement.name.lower():
-                    compatible_versions = Resolver.get_compatible_versions(existing_requirement, new_requirement)
+                    compatible_versions = self._repository.get_compatible_versions(existing_requirement,
+                                                                                   new_requirement)
                     log.debug(f"Compatible versions for {new_requirement.name}: {compatible_versions}")
                     if compatible_versions:
                         existing_requirement.specifier = existing_requirement.specifier & new_requirement.specifier
@@ -155,7 +133,8 @@ class Resolver:
 
     def get_best_versions(self) -> List[Version]:
         with ThreadPoolExecutor() as executor:
-            return list(executor.map(Resolver.get_best_version, self.dependencies))
+            return list(executor.map(lambda dep: max(self._repository.get_compatible_versions(dep)),
+                                     self.dependencies))
 
 
 if __name__ == '__main__':
