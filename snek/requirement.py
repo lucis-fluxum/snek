@@ -7,10 +7,11 @@ from packaging import requirements
 
 
 class Requirement(requirements.Requirement):
-    def __init__(self, *args, depth=0, **kwargs):
+    def __init__(self, *args, depth=0, project_metadata: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.lock = threading.RLock()
         self.depth = depth
+        self.project_metadata = project_metadata
         self._parent: Requirement = None
         self._children: Set[Requirement] = set()
 
