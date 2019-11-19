@@ -51,3 +51,8 @@ class Repository:
             all_versions = map(utils.convert_to_version, self.get_package_releases(name).keys())
         final_specifier = reduce(SpecifierSet.__and__, map(lambda r: r.specifier, requirements))
         return list(final_specifier.filter(all_versions))
+
+    def populate_requirement(self, requirement: Requirement):
+        requirement.project_metadata = self.get_package_info(requirement.name)
+        requirement.compatible_versions = self.get_compatible_versions(requirement)
+        requirement.best_candidate_version = max(requirement.compatible_versions)

@@ -3,7 +3,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List, Optional, Set
 
 from packaging.markers import Marker, UndefinedEnvironmentName
-from packaging.version import Version
 
 from snek import utils
 from snek.repository import Repository
@@ -80,9 +79,7 @@ class Resolver:
     # TODO: Test this new behavior
     def resolve(self):
         log.debug(f"Populating {self._requirement}")
-        self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name)
-        self._requirement.compatible_versions = self._repository.get_compatible_versions(self._requirement)
-        self._requirement.best_candidate_version = max(self._requirement.compatible_versions)
+        self._repository.populate_requirement(self._requirement)
 
         current_version = utils.convert_to_version(self._requirement.project_metadata['info']['version'])
         if current_version != self._requirement.best_candidate_version:
@@ -91,62 +88,23 @@ class Resolver:
         requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
 
         if requires_dist and len(requires_dist) > 0:
-            # for sub_req_string in requires_dist:
-            def resolve_sub_req(sub_req_string):
-                sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
-
-                if not self.evaluate_marker(sub_requirement.marker):
-                    log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
-                elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
-                    log.warning(f"Circular dependency detected: {' -> '.join(reversed(sub_requirement.ancestors()))} -> {sub_requirement}")
-                else:
-                    sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
-                    sub_resolver.resolve()
-                    self._requirement.add_sub_requirement(sub_resolver._requirement)
             with ThreadPoolExecutor() as executor:
-                executor.map(resolve_sub_req, requires_dist)
+                executor.map(self.resolve_sub_requirement, requires_dist)
 
-    def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
-        metadata = self._repository.get_package_info(requirement.name,
-                                                     max(self._repository.get_compatible_versions(requirement)))
-        requires_dist: List[str] = metadata['info']['requires_dist']
-        if requires_dist and len(requires_dist) > 0:
-            reqs = [Requirement(dep) for dep in requires_dist]
-            return [req for req in reqs if not req.marker or self.evaluate_marker(req.marker)]
+    def resolve_sub_requirement(self, sub_req_string):
+        sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
+
+        if not self.evaluate_marker(sub_requirement.marker):
+            log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
+        elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
+            log.warning(
+                f"Circular dependency detected: {' -> '.join(reversed(sub_requirement.ancestors()))} -> {sub_requirement}")
         else:
-            return []
-
-    def add_new_requirement(self, new_requirement: Requirement):
-        if not self.evaluate_marker(new_requirement.marker):
-            log.warning(f"Incompatible marker: {new_requirement.marker}, ignoring {new_requirement}")
-            return
-
-        if new_requirement.name not in map(lambda r: r.name, self.dependencies):
-            log.debug(f"Adding {new_requirement}...")
-            if self._repository.get_compatible_versions(new_requirement):
-                self.dependencies.append(new_requirement)
-                self.add_sub_requirements(new_requirement)
-            else:
-                raise RuntimeError(f"No compatible versions found for {new_requirement.name}.")
-        else:
-            for existing_requirement in self.dependencies:
-                if existing_requirement.name.lower() == new_requirement.name.lower():
-                    compatible_versions = self._repository.get_compatible_versions(existing_requirement,
-                                                                                   new_requirement)
-                    log.debug(f"Compatible versions for {new_requirement.name}: {compatible_versions}")
-                    if compatible_versions:
-                        existing_requirement.specifier = existing_requirement.specifier & new_requirement.specifier
-                        log.debug(f"Requirement updated: {str(existing_requirement)}")
-                        return
-                    else:
-                        raise RuntimeError(f"No compatible versions found for {new_requirement.name}.")
-
-    def add_sub_requirements(self, requirement: Requirement):
-        for sub_requirement in self.get_sub_requirements(requirement):
-            if self.evaluate_marker(sub_requirement.marker):
-                sub_requirement.marker = None
-                sub_resolver = Resolver(sub_requirement, dependencies=self.dependencies)
-                self.dependencies = sub_resolver.dependencies
+            # TODO: Check if we need to set the marker on the sub requirement to None, since we're entering a new
+            #       resolver context
+            sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
+            sub_resolver.resolve()
+            self._requirement.add_sub_requirement(sub_resolver._requirement)
 
     def evaluate_marker(self, marker: Optional[Marker]) -> bool:
         try:
@@ -159,11 +117,6 @@ class Resolver:
                 except UndefinedEnvironmentName:
                     return False
             return False
-
-    def get_best_versions(self) -> List[Version]:
-        with ThreadPoolExecutor() as executor:
-            return list(executor.map(lambda dep: max(self._repository.get_compatible_versions(dep)),
-                                     self.dependencies))
 
 
 if __name__ == '__main__':

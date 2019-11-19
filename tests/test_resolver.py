@@ -2,8 +2,8 @@ import sys
 
 import pytest
 from packaging.markers import Marker
-from packaging.requirements import Requirement
 
+from snek.requirement import Requirement
 from snek.resolver import Resolver
 from tests.conftest import mock_repository_json
 
@@ -29,16 +29,17 @@ FLASK_ALL_REQUIREMENTS = FLASK_REQUIREMENTS.union(FLASK_DEV_REQUIREMENTS).union(
 
 
 class TestResolver:
-    @pytest.mark.parametrize('req_str, extras, expected_reqs',
-                             [('Flask', {}, FLASK_REQUIREMENTS),
-                              ('Flask[dev]', {'dev'}, FLASK_DEV_REQUIREMENTS),
-                              ('Flask[docs]', {'docs'}, FLASK_DOCS_REQUIREMENTS),
-                              ('Flask[dev, docs]', {'dev', 'docs'}, FLASK_ALL_REQUIREMENTS)])
-    def test_get_sub_requirements(self, mocker, req_str, extras, expected_reqs):
-        mock_repository_json(mocker)
-        resolver = Resolver(extras=extras)
-        requirements = map(str, resolver.get_sub_requirements(Requirement(req_str)))
-        assert set(requirements) == expected_reqs
+    # TODO: Re-use this code to test new resolving logic
+    # @pytest.mark.parametrize('req_str, extras, expected_reqs',
+    #                          [('Flask', {}, FLASK_REQUIREMENTS),
+    #                           ('Flask[dev]', {'dev'}, FLASK_DEV_REQUIREMENTS),
+    #                           ('Flask[docs]', {'docs'}, FLASK_DOCS_REQUIREMENTS),
+    #                           ('Flask[dev, docs]', {'dev', 'docs'}, FLASK_ALL_REQUIREMENTS)])
+    # def test_get_sub_requirements(self, mocker, req_str, extras, expected_reqs):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver(extras=extras)
+    #     requirements = map(str, resolver.get_sub_requirements(Requirement(req_str)))
+    #     assert set(requirements) == expected_reqs
 
     def test_evaluate_extra(self):
         resolver_no_extra = Resolver()
@@ -59,46 +60,45 @@ class TestResolver:
         else:
             assert not resolver.evaluate_marker(windows_marker)
 
-    def test_dont_add_existing_requirement(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver(dependencies=[Requirement('Flask')])
-        assert len(resolver.dependencies) == 1
-        resolver.add_new_requirement(Requirement('Flask'))
-        assert len(resolver.dependencies) == 1
+    # TODO: Replace these tests with the following:
+    #       - Don't add existing requirement: store list of dependencies in a set
+    #       - Add new requirement: just resolve and maybe compare contents of the dependency tree instead of length
+    #       - Same for new requirement with many dependencies
+    #       - Also have a test for circular dependencies
+    # def test_dont_add_existing_requirement(self, mocker):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver(dependencies=[Requirement('Flask')])
+    #     assert len(resolver.dependencies) == 1
+    #     resolver.add_new_requirement(Requirement('Flask'))
+    #     assert len(resolver.dependencies) == 1
+    #
+    # def test_add_new_requirement(self, mocker):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver()
+    #     assert len(resolver.dependencies) == 0
+    #     resolver.add_new_requirement(Requirement('Flask'))
+    #     assert len(resolver.dependencies) == 6
+    #
+    # def test_add_new_requirement_many_sub_requirements(self, mocker):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver(extras={'dev'})
+    #     resolver.add_new_requirement(Requirement('Flask'))
+    #     assert len(resolver.dependencies) == 47
+    #
+    # def test_add_new_requirement_on_init(self, mocker):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver(Requirement('Flask'))
+    #     assert len(resolver.dependencies) == 6
+    #     resolver = Resolver(Requirement('Flask[dev]'))
+    #     assert len(resolver.dependencies) == 47
 
-    def test_add_new_requirement(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver()
-        assert len(resolver.dependencies) == 0
-        resolver.add_new_requirement(Requirement('Flask'))
-        assert len(resolver.dependencies) == 6
-
-    def test_add_sub_requirements(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver()
-        resolver.add_sub_requirements(Requirement('Flask'))
-        # Length is 1 less than in test_add_new_requirement
-        assert len(resolver.dependencies) == 5
-
-    def test_add_new_requirement_many_sub_requirements(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver(extras={'dev'})
-        resolver.add_new_requirement(Requirement('Flask'))
-        assert len(resolver.dependencies) == 47
-
-    def test_add_new_requirement_on_init(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver(Requirement('Flask'))
-        assert len(resolver.dependencies) == 6
-        resolver = Resolver(Requirement('Flask[dev]'))
-        assert len(resolver.dependencies) == 47
-
-    def test_get_best_versions(self, mocker):
-        mock_repository_json(mocker)
-        resolver = Resolver(Requirement('Flask'))
-        best_versions = map(str, resolver.get_best_versions())
-        assert list(best_versions) == FLASK_REQUIREMENTS_VERSIONS
-
-        resolver = Resolver(Requirement('Flask[dev]'))
-        best_versions = list(map(str, resolver.get_best_versions()))
-        assert best_versions == FLASK_DEV_REQUIREMENTS_VERSIONS
+    # TODO: This comes later, after we are able to actually resolve all the dependencies
+    # def test_get_best_versions(self, mocker):
+    #     mock_repository_json(mocker)
+    #     resolver = Resolver(Requirement('Flask'))
+    #     best_versions = map(str, resolver.get_best_versions())
+    #     assert list(best_versions) == FLASK_REQUIREMENTS_VERSIONS
+    #
+    #     resolver = Resolver(Requirement('Flask[dev]'))
+    #     best_versions = list(map(str, resolver.get_best_versions()))
+    #     assert best_versions == FLASK_DEV_REQUIREMENTS_VERSIONS
