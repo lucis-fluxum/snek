@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Set, Union
+from typing import Set, Union, List
 
 from packaging import requirements
 from packaging.version import Version, LegacyVersion
@@ -48,3 +48,11 @@ class Requirement(requirements.Requirement):
                 if child.has_descendant(req):
                     return True
         return False
+
+    def ancestors(self):
+        ancestors: List[Requirement] = []
+        node = self
+        while node._parent:
+            ancestors.append(node._parent)
+            node = node._parent
+        return ancestors

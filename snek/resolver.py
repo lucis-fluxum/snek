@@ -77,6 +77,7 @@ class Resolver:
             self._extras: Set[str] = requirement.extras
             # self.add_new_requirement(requirement)
 
+    # TODO: Test this new behavior
     def resolve(self):
         log.debug(f"Populating {self._requirement}")
         self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name)
@@ -90,16 +91,20 @@ class Resolver:
         requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
 
         if requires_dist and len(requires_dist) > 0:
-            for sub_req_string in requires_dist:
+            # for sub_req_string in requires_dist:
+            def resolve_sub_req(sub_req_string):
                 sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
 
-                # Make sure we're adding a requirement that's compatible with the current environment
-                if self.evaluate_marker(sub_requirement.marker):
+                if not self.evaluate_marker(sub_requirement.marker):
+                    log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
+                elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
+                    log.warning(f"Circular dependency detected: {' -> '.join(reversed(sub_requirement.ancestors()))} -> {sub_requirement}")
+                else:
                     sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
                     sub_resolver.resolve()
                     self._requirement.add_sub_requirement(sub_resolver._requirement)
-                else:
-                    log.warning(f"Incompatible marker: {sub_requirement.marker}, ignoring {sub_requirement}")
+            with ThreadPoolExecutor() as executor:
+                executor.map(resolve_sub_req, requires_dist)
 
     def get_sub_requirements(self, requirement: Requirement) -> List[Requirement]:
         metadata = self._repository.get_package_info(requirement.name,
@@ -166,6 +171,6 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('Flask[dev]'))
+    resolver = Resolver(Requirement('jupyterlab'))
     resolver.resolve()
-    print(list(map(lambda d: d._children, resolver._requirement._children)))
+    resolver
