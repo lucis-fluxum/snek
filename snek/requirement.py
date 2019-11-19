@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Set, Union, List
+from typing import Set, Union, List, Dict
 
 from packaging import requirements
 from packaging.version import Version, LegacyVersion
@@ -49,10 +49,19 @@ class Requirement(requirements.Requirement):
                     return True
         return False
 
-    def ancestors(self):
+    def ancestors(self) -> List[Requirement]:
         ancestors: List[Requirement] = []
         node = self
         while node._parent:
             ancestors.append(node._parent)
             node = node._parent
         return ancestors
+
+    def descendants(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
+        descendants = {}
+        for child in self._children:
+            if stringify_keys:
+                descendants[str(child)] = child.descendants(stringify_keys=True)
+            else:
+                descendants[child] = child.descendants()
+        return descendants

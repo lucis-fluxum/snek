@@ -1,6 +1,6 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Dict, Union
 
 from packaging.markers import Marker, UndefinedEnvironmentName
 
@@ -77,7 +77,7 @@ class Resolver:
             # self.add_new_requirement(requirement)
 
     # TODO: Test this new behavior
-    def resolve(self):
+    def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
         log.debug(f"Populating {self._requirement}")
         self._repository.populate_requirement(self._requirement)
 
@@ -90,6 +90,10 @@ class Resolver:
         if requires_dist and len(requires_dist) > 0:
             with ThreadPoolExecutor() as executor:
                 executor.map(self.resolve_sub_requirement, requires_dist)
+        if stringify_keys:
+            return {str(self._requirement): self._requirement.descendants(stringify_keys=True)}
+        else:
+            return {self._requirement: self._requirement.descendants()}
 
     def resolve_sub_requirement(self, sub_req_string):
         sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
@@ -125,5 +129,6 @@ if __name__ == '__main__':
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
     resolver = Resolver(Requirement('jupyterlab'))
-    resolver.resolve()
-    resolver
+    import json
+
+    print(json.dumps(resolver.resolve(stringify_keys=True), sort_keys=True, indent=4))
