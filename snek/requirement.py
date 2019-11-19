@@ -32,11 +32,11 @@ class Requirement(requirements.Requirement):
             self._children.add(new_req)
         return new_req
 
-    def has_child(self, req: Requirement) -> bool:
+    def has_descendant(self, req: Requirement) -> bool:
         with self.lock:
             if req in self._children:
                 return True
             for child in self._children:
-                if child.has_child(req):
+                if child.has_descendant(req):
                     return True
         return False

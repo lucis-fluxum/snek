@@ -20,12 +20,12 @@ class TestRequirement:
         assert r1.depth == 0
         assert r2.depth == 1
 
-    def test_has_child(self):
+    def test_has_descendant(self):
         r1 = Requirement('Flask')
         r2 = Requirement('bidict')
-        assert not r1.has_child(r2)
+        assert not r1.has_descendant(r2)
         r2 = r1.add_sub_requirement(r2)
-        assert r1.has_child(r2)
+        assert r1.has_descendant(r2)
 
     def test_equality(self):
         r1 = Requirement('Flask')
