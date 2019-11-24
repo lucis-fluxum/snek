@@ -1,0 +1,10 @@
+{
+    "Flask[test]": {
+        "Jinja2>=2.10.1": {
+            "MarkupSafe>=0.23": {}
+        },
+        "Werkzeug>=0.15": {},
+        "click>=5.1": {},
+        "itsdangerous>=0.24": {}
+    }
+}

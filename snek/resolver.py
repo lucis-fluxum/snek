@@ -75,7 +75,6 @@ class Resolver:
         if requirement:
             self._extras: Set[str] = requirement.extras
 
-    # TODO: Test this new behavior
     def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
         log.debug(f"Populating {self._requirement}")
         self._repository.populate_requirement(self._requirement)

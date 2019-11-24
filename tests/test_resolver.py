@@ -1,45 +1,31 @@
-import sys
+import json
 
 import pytest
 from packaging.markers import Marker
 
 from snek.requirement import Requirement
 from snek.resolver import Resolver
-from tests.conftest import mock_repository_json
+from tests.conftest import mock_repository_json, load_fixture
 
-FLASK_REQUIREMENTS = {'Werkzeug>=0.15', 'Jinja2>=2.10.1', 'itsdangerous>=0.24', 'click>=5.1'}
-# This includes a version of Flask itself
-FLASK_REQUIREMENTS_VERSIONS = ['1.1.1', '0.16.0', '2.10.3', '1.1.1', '1.1.0', '7.0']
-FLASK_DEV_REQUIREMENTS = FLASK_REQUIREMENTS.union({'pytest; extra == "dev"', 'coverage; extra == "dev"',
-                                                   'tox; extra == "dev"',
-                                                   'sphinx; extra == "dev"', 'pallets-sphinx-themes; extra == "dev"',
-                                                   'sphinxcontrib-log-cabinet; extra == "dev"',
-                                                   'sphinx-issues; extra == "dev"'})
-# This includes versions for requirements of sub-requirements
-FLASK_DEV_REQUIREMENTS_VERSIONS = ['1.1.1', '0.16.0', '2.10.3', '1.1.1', '1.1.0', '7.0', '5.2.4', '1.8.0', '19.2',
-                                   '2.4.5', '1.13.0', '19.3.0', '7.2.0', '1.3.0', '0.13.0', '0.1.7', '4.5.4', '3.14.1',
-                                   '16.7.7', '0.10.0', '3.0.12', '2.2.1', '1.0.1', '1.0.1', '1.0.1', '1.0.2', '1.1.3',
-                                   '1.0.2', '2.4.2', '0.15.2', '2.0.0', '2.7.0', '2019.3', '0.7.12', '1.1.0', '2.22.0',
-                                   '3.0.4', '2.8', '1.25.7', '2019.9.11', '41.6.0', '1.2.2', '0.23', '0.6.0', '2.2.1',
-                                   '1.0.1', '1.2.0']
-FLASK_DOCS_REQUIREMENTS = FLASK_REQUIREMENTS.union({'sphinx; extra == "docs"', 'pallets-sphinx-themes; extra == "docs"',
-                                                    'sphinxcontrib-log-cabinet; extra == "docs"',
-                                                    'sphinx-issues; extra == "docs"'})
-FLASK_ALL_REQUIREMENTS = FLASK_REQUIREMENTS.union(FLASK_DEV_REQUIREMENTS).union(FLASK_DOCS_REQUIREMENTS)
+FLASK_GRAPH = json.loads(load_fixture('resolver/Flask_dependency_graph.json'))
+FLASK_DEV_GRAPH = json.loads(load_fixture('resolver/Flask[dev]_dependency_graph.json'))
+FLASK_TEST_GRAPH = json.loads(load_fixture('resolver/Flask[test]_dependency_graph.json'))
+FLASK_DOCS_GRAPH = json.loads(load_fixture('resolver/Flask[docs]_dependency_graph.json'))
+FLASK_ALL_EXTRAS_GRAPH = json.loads(load_fixture('resolver/Flask[dev, docs, test]_dependency_graph.json'))
 
 
 class TestResolver:
-    # TODO: Re-use this code to test new resolving logic
-    # @pytest.mark.parametrize('req_str, extras, expected_reqs',
-    #                          [('Flask', {}, FLASK_REQUIREMENTS),
-    #                           ('Flask[dev]', {'dev'}, FLASK_DEV_REQUIREMENTS),
-    #                           ('Flask[docs]', {'docs'}, FLASK_DOCS_REQUIREMENTS),
-    #                           ('Flask[dev, docs]', {'dev', 'docs'}, FLASK_ALL_REQUIREMENTS)])
-    # def test_get_sub_requirements(self, mocker, req_str, extras, expected_reqs):
-    #     mock_repository_json(mocker)
-    #     resolver = Resolver(extras=extras)
-    #     requirements = map(str, resolver.get_sub_requirements(Requirement(req_str)))
-    #     assert set(requirements) == expected_reqs
+    @pytest.mark.parametrize('req_str, expected_graph',
+                             [('Flask', FLASK_GRAPH),
+                              ('Flask[dev]', FLASK_DEV_GRAPH),
+                              ('Flask[test]', FLASK_TEST_GRAPH),
+                              ('Flask[docs]', FLASK_DOCS_GRAPH),
+                              ('Flask[dev, docs, test]', FLASK_ALL_EXTRAS_GRAPH)])
+    def test_resolve(self, mocker, req_str, expected_graph):
+        mock_repository_json(mocker)
+        resolver = Resolver(Requirement(req_str))
+        dep_graph = resolver.resolve(stringify_keys=True)
+        assert dep_graph == expected_graph
 
     def test_evaluate_extra(self):
         resolver_no_extra = Resolver()

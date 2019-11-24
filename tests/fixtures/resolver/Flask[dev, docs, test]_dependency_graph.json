@@ -1,0 +1,376 @@
+{
+    "Flask[dev,docs,test]": {
+        "Jinja2>=2.10.1": {
+            "MarkupSafe>=0.23": {}
+        },
+        "Werkzeug>=0.15": {},
+        "click>=5.1": {},
+        "coverage; extra == \"dev\"": {},
+        "itsdangerous>=0.24": {},
+        "pallets-sphinx-themes; extra == \"dev\"": {
+            "Sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            },
+            "importlib-metadata": {
+                "configparser>=3.5; python_version < \"3\"": {},
+                "contextlib2; python_version < \"3\"": {},
+                "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                    "scandir; python_version < \"3.5\"": {},
+                    "six": {}
+                },
+                "zipp>=0.5": {
+                    "more-itertools": {}
+                }
+            },
+            "packaging": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            }
+        },
+        "pallets-sphinx-themes; extra == \"docs\"": {
+            "Sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            },
+            "importlib-metadata": {
+                "configparser>=3.5; python_version < \"3\"": {},
+                "contextlib2; python_version < \"3\"": {},
+                "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                    "scandir; python_version < \"3.5\"": {},
+                    "six": {}
+                },
+                "zipp>=0.5": {
+                    "more-itertools": {}
+                }
+            },
+            "packaging": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            }
+        },
+        "pytest; extra == \"dev\"": {
+            "atomicwrites>=1.0; sys_platform == \"win32\"": {},
+            "attrs>=17.4.0": {},
+            "colorama; sys_platform == \"win32\"": {},
+            "importlib-metadata>=0.12; python_version < \"3.8\"": {
+                "configparser>=3.5; python_version < \"3\"": {},
+                "contextlib2; python_version < \"3\"": {},
+                "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                    "scandir; python_version < \"3.5\"": {},
+                    "six": {}
+                },
+                "zipp>=0.5": {
+                    "more-itertools": {}
+                }
+            },
+            "more-itertools>=4.0.0": {},
+            "packaging": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            },
+            "pathlib2>=2.2.0; python_version < \"3.6\"": {
+                "scandir; python_version < \"3.5\"": {},
+                "six": {}
+            },
+            "pluggy<1.0,>=0.12": {
+                "importlib-metadata>=0.12; python_version < \"3.8\"": {
+                    "configparser>=3.5; python_version < \"3\"": {},
+                    "contextlib2; python_version < \"3\"": {},
+                    "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                        "scandir; python_version < \"3.5\"": {},
+                        "six": {}
+                    },
+                    "zipp>=0.5": {
+                        "more-itertools": {}
+                    }
+                }
+            },
+            "py>=1.5.0": {},
+            "wcwidth": {}
+        },
+        "sphinx-issues; extra == \"dev\"": {
+            "sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            }
+        },
+        "sphinx-issues; extra == \"docs\"": {
+            "sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            }
+        },
+        "sphinx; extra == \"dev\"": {
+            "Jinja2>=2.3": {
+                "MarkupSafe>=0.23": {}
+            },
+            "Pygments>=2.0": {},
+            "alabaster<0.8,>=0.7": {},
+            "babel!=2.0,>=1.3": {
+                "pytz>=2015.7": {}
+            },
+            "colorama>=0.3.5; sys_platform == \"win32\"": {},
+            "docutils>=0.12": {},
+            "imagesize": {},
+            "packaging": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            },
+            "requests>=2.5.0": {
+                "certifi>=2017.4.17": {},
+                "chardet<3.1.0,>=3.0.2": {},
+                "idna<2.9,>=2.5": {},
+                "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+            },
+            "setuptools": {},
+            "snowballstemmer>=1.1": {},
+            "sphinxcontrib-applehelp": {},
+            "sphinxcontrib-devhelp": {},
+            "sphinxcontrib-htmlhelp": {},
+            "sphinxcontrib-jsmath": {},
+            "sphinxcontrib-qthelp": {},
+            "sphinxcontrib-serializinghtml": {}
+        },
+        "sphinx; extra == \"docs\"": {
+            "Jinja2>=2.3": {
+                "MarkupSafe>=0.23": {}
+            },
+            "Pygments>=2.0": {},
+            "alabaster<0.8,>=0.7": {},
+            "babel!=2.0,>=1.3": {
+                "pytz>=2015.7": {}
+            },
+            "colorama>=0.3.5; sys_platform == \"win32\"": {},
+            "docutils>=0.12": {},
+            "imagesize": {},
+            "packaging": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            },
+            "requests>=2.5.0": {
+                "certifi>=2017.4.17": {},
+                "chardet<3.1.0,>=3.0.2": {},
+                "idna<2.9,>=2.5": {},
+                "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+            },
+            "setuptools": {},
+            "snowballstemmer>=1.1": {},
+            "sphinxcontrib-applehelp": {},
+            "sphinxcontrib-devhelp": {},
+            "sphinxcontrib-htmlhelp": {},
+            "sphinxcontrib-jsmath": {},
+            "sphinxcontrib-qthelp": {},
+            "sphinxcontrib-serializinghtml": {}
+        },
+        "sphinxcontrib-log-cabinet; extra == \"dev\"": {
+            "Sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            }
+        },
+        "sphinxcontrib-log-cabinet; extra == \"docs\"": {
+            "Sphinx": {
+                "Jinja2>=2.3": {
+                    "MarkupSafe>=0.23": {}
+                },
+                "Pygments>=2.0": {},
+                "alabaster<0.8,>=0.7": {},
+                "babel!=2.0,>=1.3": {
+                    "pytz>=2015.7": {}
+                },
+                "colorama>=0.3.5; sys_platform == \"win32\"": {},
+                "docutils>=0.12": {},
+                "imagesize": {},
+                "packaging": {
+                    "pyparsing>=2.0.2": {},
+                    "six": {}
+                },
+                "requests>=2.5.0": {
+                    "certifi>=2017.4.17": {},
+                    "chardet<3.1.0,>=3.0.2": {},
+                    "idna<2.9,>=2.5": {},
+                    "urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1": {}
+                },
+                "setuptools": {},
+                "snowballstemmer>=1.1": {},
+                "sphinxcontrib-applehelp": {},
+                "sphinxcontrib-devhelp": {},
+                "sphinxcontrib-htmlhelp": {},
+                "sphinxcontrib-jsmath": {},
+                "sphinxcontrib-qthelp": {},
+                "sphinxcontrib-serializinghtml": {}
+            }
+        },
+        "tox; extra == \"dev\"": {
+            "filelock<4,>=3.0.0": {},
+            "importlib-metadata<1,>=0.12; python_version < \"3.8\"": {
+                "configparser>=3.5; python_version < \"3\"": {},
+                "contextlib2; python_version < \"3\"": {},
+                "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                    "scandir; python_version < \"3.5\"": {},
+                    "six": {}
+                },
+                "zipp>=0.5": {
+                    "more-itertools": {}
+                }
+            },
+            "packaging>=14": {
+                "pyparsing>=2.0.2": {},
+                "six": {}
+            },
+            "pluggy<1,>=0.12.0": {
+                "importlib-metadata>=0.12; python_version < \"3.8\"": {
+                    "configparser>=3.5; python_version < \"3\"": {},
+                    "contextlib2; python_version < \"3\"": {},
+                    "pathlib2; python_version == \"3.4.*\" or python_version < \"3\"": {
+                        "scandir; python_version < \"3.5\"": {},
+                        "six": {}
+                    },
+                    "zipp>=0.5": {
+                        "more-itertools": {}
+                    }
+                }
+            },
+            "py<2,>=1.4.17": {},
+            "six<2,>=1.0.0": {},
+            "toml>=0.9.4": {},
+            "virtualenv>=16.0.0": {}
+        }
+    }
+}

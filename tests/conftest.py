@@ -11,7 +11,7 @@ def load_fixture(filename):
 
 def mock_repository_json(mocker):
     mocker.patch('snek.repository.Repository.get_package_info',
-                 side_effect=lambda name, version=None: json.loads(load_fixture(f"json/pypi_{name.lower()}.json")))
+                 side_effect=lambda name, version=None: json.loads(load_fixture(f"pypi/pypi_{name.lower()}.json")))
 
 
 @pytest.fixture
