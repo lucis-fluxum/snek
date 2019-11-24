@@ -1,6 +1,6 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Optional, Set, Dict, Union, List
+from typing import Optional, Set, Dict, Union
 
 from packaging.markers import Marker
 
@@ -60,11 +60,11 @@ class Resolver:
     """
 
     def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
-                 dependencies: Optional[List[Requirement]] = None, repository: Optional[Repository] = None):
+                 dependencies: Optional[Set[Requirement]] = None, repository: Optional[Repository] = None):
         if extras is None:
             extras: Set[str] = set()
         if dependencies is None:
-            dependencies: List[Requirement] = []
+            dependencies: Set[Requirement] = set()
         if repository is None:
             repository = Repository()
 
@@ -77,8 +77,13 @@ class Resolver:
 
     def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
         if self.dependencies:
-            # TODO: Resolve each of the given dependencies
-            pass
+            with ThreadPoolExecutor() as executor:
+                # graphs is composed of unique dependency trees, since dependencies are in a Set
+                graphs = executor.map(lambda req: Resolver(req).resolve(stringify_keys=stringify_keys),
+                                      self.dependencies)
+            result: Dict[Union[Requirement, str], Dict] = {}
+            [result.update(graph) for graph in graphs]
+            return result
         else:
             log.debug(f"Populating {self._requirement}")
             self._repository.populate_requirement(self._requirement)
@@ -125,7 +130,8 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(Requirement('Flask[dev]'))
+    resolver = Resolver(dependencies={Requirement('Flask'), Requirement('bidict'), Requirement('Django'),
+                                      Requirement('matisse-controller')})
     import json
 
     print(json.dumps(resolver.resolve(stringify_keys=True), sort_keys=True, indent=4))
