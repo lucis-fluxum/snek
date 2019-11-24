@@ -98,7 +98,7 @@ class Resolver:
             return {self._requirement: self._requirement.descendants()}
 
     def resolve_sub_requirement(self, sub_req_string):
-        sub_requirement = Requirement(sub_req_string, depth=self._requirement.depth + 1)
+        sub_requirement = Requirement(sub_req_string, parent=self._requirement)
 
         if not self.check_marker_for_extra(sub_requirement.marker):
             log.warning(f"Ignoring {sub_requirement}.")
@@ -107,7 +107,7 @@ class Resolver:
             log.warning(
                 f"Circular dependency detected: {' -> '.join(chain)} -> {sub_requirement}")
         else:
-            sub_resolver = Resolver(Requirement(sub_req_string, depth=self._requirement.depth + 1))
+            sub_resolver = Resolver(sub_requirement)
             sub_resolver.resolve()
             self._requirement.add_sub_requirement(sub_resolver._requirement)
 

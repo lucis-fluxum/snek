@@ -9,7 +9,7 @@ from packaging.version import Version, LegacyVersion
 
 class Requirement(requirements.Requirement):
     def __init__(self, *args, depth=0, project_metadata: dict = None, compatible_versions: list = None,
-                 best_candidate_version: Union[Version, LegacyVersion] = None, **kwargs):
+                 best_candidate_version: Union[Version, LegacyVersion] = None, parent: Requirement = None, **kwargs):
         super().__init__(*args, **kwargs)
         if compatible_versions is None:
             compatible_versions = []
@@ -21,7 +21,9 @@ class Requirement(requirements.Requirement):
         self.project_metadata = project_metadata
         self.compatible_versions = compatible_versions
         self.best_candidate_version = best_candidate_version
-        self._parent: Requirement = None
+        self._parent: Requirement = parent
+        if parent:
+            self.depth = self._parent.depth + 1
         self._children: Set[Requirement] = set()
 
     def __eq__(self, other: Requirement) -> bool:
