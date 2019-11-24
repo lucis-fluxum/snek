@@ -1,8 +1,8 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List, Optional, Set, Dict, Union
+from typing import Optional, Set, Dict, Union, List
 
-from packaging.markers import Marker, UndefinedEnvironmentName
+from packaging.markers import Marker
 
 from snek import utils
 from snek.repository import Repository
@@ -76,18 +76,22 @@ class Resolver:
             self._extras: Set[str] = requirement.extras
 
     def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
-        log.debug(f"Populating {self._requirement}")
-        self._repository.populate_requirement(self._requirement)
+        if self.dependencies:
+            # TODO: Resolve each of the given dependencies
+            pass
+        else:
+            log.debug(f"Populating {self._requirement}")
+            self._repository.populate_requirement(self._requirement)
 
-        current_version = utils.convert_to_version(self._requirement.project_metadata['info']['version'])
-        if current_version != self._requirement.best_candidate_version:
-            self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name,
-                                                                                   self._requirement.best_candidate_version)
-        requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
+            current_version = utils.convert_to_version(self._requirement.project_metadata['info']['version'])
+            if current_version != self._requirement.best_candidate_version:
+                self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name,
+                                                                                       self._requirement.best_candidate_version)
+            requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
 
-        if requires_dist and len(requires_dist) > 0:
-            with ThreadPoolExecutor() as executor:
-                executor.map(self.resolve_sub_requirement, requires_dist)
+            if requires_dist and len(requires_dist) > 0:
+                with ThreadPoolExecutor() as executor:
+                    executor.map(self.resolve_sub_requirement, requires_dist)
         if stringify_keys:
             return {str(self._requirement): self._requirement.descendants(stringify_keys=True)}
         else:
