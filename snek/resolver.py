@@ -106,7 +106,7 @@ class Resolver:
         sub_requirement = Requirement(sub_req_string, parent=self._requirement)
 
         if not self.check_marker_for_extra(sub_requirement.marker):
-            log.warning(f"Ignoring {sub_requirement}.")
+            log.debug(f"Ignoring {sub_requirement}.")
         elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
             chain = reversed(list(map(str, sub_requirement.ancestors())))
             log.warning(
@@ -130,8 +130,7 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(dependencies={Requirement('Flask'), Requirement('bidict'), Requirement('Django'),
-                                      Requirement('matisse-controller')})
+    resolver = Resolver(dependencies={Requirement('Flask[dev, docs]'), Requirement('jupyterlab[docs, test]')})
     import json
 
     print(json.dumps(resolver.resolve(stringify_keys=True), sort_keys=True, indent=4))
