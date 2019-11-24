@@ -21,11 +21,14 @@ class TestResolver:
                               ('Flask[test]', FLASK_TEST_GRAPH),
                               ('Flask[docs]', FLASK_DOCS_GRAPH),
                               ('Flask[dev, docs, test]', FLASK_ALL_EXTRAS_GRAPH)])
-    def test_resolve(self, mocker, req_str, expected_graph):
+    def test_single_resolve(self, mocker, req_str, expected_graph):
         mock_repository_json(mocker)
         resolver = Resolver(Requirement(req_str))
         dep_graph = resolver.resolve(stringify_keys=True)
         assert dep_graph == expected_graph
+
+    def test_multi_resolve(self, mocker):
+        pytest.skip('TODO')
 
     def test_evaluate_extra(self):
         resolver_no_extra = Resolver()
