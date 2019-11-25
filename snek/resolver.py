@@ -1,5 +1,4 @@
 import logging
-from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Optional, Set, Dict, Union
 
 from packaging.markers import Marker
@@ -7,10 +6,15 @@ from packaging.markers import Marker
 from snek import utils
 from snek.repository import Repository
 from snek.requirement import Requirement
+from snek.utils import parallel_map
 
 REPOSITORY_URL = 'https://pypi.org'
 
 log = logging.getLogger(__name__)
+
+
+class CircularDependencyError(RuntimeError):
+    pass
 
 
 # TODO: 'Actions' to perform install/uninstall/update/other tasks
@@ -77,10 +81,7 @@ class Resolver:
 
     def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
         if self.dependencies:
-            with ThreadPoolExecutor() as executor:
-                # graphs is composed of unique dependency trees, since dependencies are in a Set
-                graphs = executor.map(lambda req: Resolver(req).resolve(stringify_keys=stringify_keys),
-                                      self.dependencies)
+            graphs = parallel_map(lambda req: Resolver(req).resolve(stringify_keys=stringify_keys), self.dependencies)
             result: Dict[Union[Requirement, str], Dict] = {}
             [result.update(graph) for graph in graphs]
             return result
@@ -95,8 +96,7 @@ class Resolver:
             requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
 
             if requires_dist and len(requires_dist) > 0:
-                with ThreadPoolExecutor() as executor:
-                    executor.map(self.resolve_sub_requirement, requires_dist)
+                parallel_map(self.resolve_sub_requirement, requires_dist)
         if stringify_keys:
             return {str(self._requirement): self._requirement.descendants(stringify_keys=True)}
         else:
@@ -111,6 +111,7 @@ class Resolver:
             chain = reversed(list(map(str, sub_requirement.ancestors())))
             log.warning(
                 f"Circular dependency detected: {' -> '.join(chain)} -> {sub_requirement}")
+            raise CircularDependencyError
         else:
             sub_resolver = Resolver(sub_requirement)
             sub_resolver.resolve()
