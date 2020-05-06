@@ -9,17 +9,14 @@ from packaging.version import Version, LegacyVersion
 
 
 class Requirement(requirements.Requirement):
-    def __init__(self, *args, depth: int = 0, parent: Optional[Requirement] = None, **kwargs):
+    def __init__(self, *args, parent: Optional[Requirement] = None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.lock = threading.RLock()
-        self.depth = depth
         self.project_metadata = dict()
         self.compatible_versions: List[Union[LegacyVersion, Version]] = []
         self.best_candidate_version: Optional[Union[LegacyVersion, Version]] = None
         self._parent: Optional[Requirement] = parent
-        if parent:
-            self.depth = self._parent.depth + 1
         self._children: Set[Requirement] = set()
 
     def __eq__(self, other: Requirement) -> bool:
@@ -29,13 +26,12 @@ class Requirement(requirements.Requirement):
         return str(self).__hash__()
 
     def __repr__(self) -> str:
-        return f"<Requirement '{self}', depth: {self.depth}>"
+        return f"<Requirement '{self}'>"
 
     # TODO: This changes the requirement passed in
     def add_sub_requirement(self, req: Requirement):
         with self.lock:
             req._parent = self
-            req.depth = self.depth + 1
             self._children.add(req)
 
     def has_descendant(self, req: Requirement) -> bool:

@@ -9,7 +9,8 @@ class TestRequirement:
             # Inherits behavior from packaging.requirements
             Requirement()
         r = Requirement('Flask')
-        assert r.depth == 0
+        assert r.parent() is None
+        assert len(r.children()) == 0
 
     def test_equality(self):
         r1 = Requirement('Flask')
@@ -22,11 +23,9 @@ class TestRequirement:
     def test_add_sub_requirement(self):
         r1 = Requirement('Flask')
         r2 = Requirement('bidict')
-        assert r1.depth == 0 and r2.depth == 0
         assert r1.parent() is None and r2.parent() is None
         assert len(r1.children()) == 0 and len(r2.children()) == 0
         r1.add_sub_requirement(r2)
-        assert r1.depth == 0 and r2.depth == 1
         assert r1.parent() is None and r2.parent() == r1
         assert len(r1.children()) == 1 and len(r2.children()) == 0
 

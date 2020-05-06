@@ -37,6 +37,7 @@ class Repository:
         return self.get_package_info(package_name)['releases']
 
     # Assumption: first requirement should have metadata or else I'll go and get it myself
+    # TODO: This should be part of the reducer
     def get_compatible_versions(self, *requirements: Requirement) -> List[Union[LegacyVersion, Version]]:
         if not requirements:
             raise InvalidRequirementError('No requirements given.')
