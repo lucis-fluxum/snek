@@ -60,7 +60,6 @@ class TestResolver:
         with pytest.raises(CircularDependencyError):
             resolver.resolve(Requirement('snek_circular_test_1'))
 
-
     # TODO: Evaluate the marker when deciding exactly what to install
     # def test_evaluate_marker(self):
     #     resolver = Resolver()

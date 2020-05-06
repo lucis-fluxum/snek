@@ -1,3 +1,4 @@
+# For PEP 563 https://www.python.org/dev/peps/pep-0563/, remove for Python 4.0+
 from __future__ import annotations
 
 import threading
