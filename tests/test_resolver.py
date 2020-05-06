@@ -3,7 +3,7 @@ import json
 import pytest
 
 from snek.requirement import Requirement
-from snek.resolver import Resolver
+from snek.resolver import Resolver, CircularDependencyError
 from tests.conftest import mock_repository_json, load_fixture
 
 FLASK_GRAPH = json.loads(load_fixture('resolver/Flask_dependency_graph.json'))
@@ -53,6 +53,13 @@ class TestResolver:
         for extra in ['dev', 'test', 'another']:
             sub_req = Requirement(f"test2 ; extra == '{extra}'", parent=req_multi_extra)
             assert not Resolver.should_ignore(sub_req)
+
+    def test_circular_dependency(self, mocker):
+        mock_repository_json(mocker)
+        resolver = Resolver()
+        with pytest.raises(CircularDependencyError):
+            resolver.resolve(Requirement('snek_circular_test_1'))
+
 
     # TODO: Evaluate the marker when deciding exactly what to install
     # def test_evaluate_marker(self):

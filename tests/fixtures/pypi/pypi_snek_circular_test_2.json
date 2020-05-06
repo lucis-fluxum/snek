@@ -1,0 +1,38 @@
+{
+  "info": {
+    "bugtrack_url": null,
+    "classifiers": [],
+    "description": "UNKNOWN",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "UNKNOWN",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "UNKNOWN",
+    "keywords": null,
+    "license": "UNKNOWN",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "snek_circular_test_2",
+    "platform": "UNKNOWN",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "UNKNOWN"
+    },
+    "requires_dist": [
+      "snek_circular_test_1"
+    ],
+    "requires_python": null,
+    "summary": "UNKNOWN",
+    "version": "1.0.0",
+    "yanked": false
+  },
+  "last_serial": 487105,
+  "releases": {
+    "1.0.0": []
+  },
+  "urls": []
+}
