@@ -2,26 +2,21 @@
 from __future__ import annotations
 
 import threading
-from typing import Set, Union, List, Dict
+from typing import Set, Union, List, Dict, Optional
 
 from packaging import requirements
 from packaging.version import Version, LegacyVersion
 
 
 class Requirement(requirements.Requirement):
-    def __init__(self, *args, depth=0, project_metadata: dict = None, compatible_versions: list = None,
-                 best_candidate_version: Union[Version, LegacyVersion] = None, parent: Requirement = None, **kwargs):
+    def __init__(self, *args, depth: int = 0, parent: Requirement = None, **kwargs):
         super().__init__(*args, **kwargs)
-        if compatible_versions is None:
-            compatible_versions = []
-        if project_metadata is None:
-            project_metadata = {}
 
         self.lock = threading.RLock()
         self.depth = depth
-        self.project_metadata = project_metadata
-        self.compatible_versions = compatible_versions
-        self.best_candidate_version = best_candidate_version
+        self.project_metadata = dict()
+        self.compatible_versions: List[Union[LegacyVersion, Version]] = []
+        self.best_candidate_version: Optional[Union[LegacyVersion, Version]] = None
         self._parent: Requirement = parent
         if parent:
             self.depth = self._parent.depth + 1
@@ -63,7 +58,7 @@ class Requirement(requirements.Requirement):
             node = node._parent
         return ancestors
 
-    def descendants(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
+    def descendants(self, stringify_keys: bool = False) -> Dict[Union[Requirement, str], Dict]:
         descendants = {}
         for child in self._children:
             if stringify_keys:
