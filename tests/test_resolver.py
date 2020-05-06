@@ -27,7 +27,15 @@ class TestResolver:
         assert dep_graph == expected_graph
 
     def test_multi_resolve(self, mocker):
-        pytest.skip('TODO')
+        mock_repository_json(mocker)
+        requirements = {Requirement(req) for req in ['Flask', 'Flask[dev]', 'Flask[test]']}
+        resolver = Resolver()
+        dep_graphs = resolver.resolve_many(requirements, stringify_keys=True)
+        expected_graphs = {}
+        expected_graphs.update(FLASK_GRAPH)
+        expected_graphs.update(FLASK_DEV_GRAPH)
+        expected_graphs.update(FLASK_TEST_GRAPH)
+        assert dep_graphs == expected_graphs
 
     def test_evaluate_extra(self):
         req_no_extras = Requirement('test')
