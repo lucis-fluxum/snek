@@ -9,7 +9,7 @@ from packaging.version import Version, LegacyVersion
 
 
 class Requirement(requirements.Requirement):
-    def __init__(self, *args, depth: int = 0, parent: Requirement = None, **kwargs):
+    def __init__(self, *args, depth: int = 0, parent: Optional[Requirement] = None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.lock = threading.RLock()
@@ -17,7 +17,7 @@ class Requirement(requirements.Requirement):
         self.project_metadata = dict()
         self.compatible_versions: List[Union[LegacyVersion, Version]] = []
         self.best_candidate_version: Optional[Union[LegacyVersion, Version]] = None
-        self._parent: Requirement = parent
+        self._parent: Optional[Requirement] = parent
         if parent:
             self.depth = self._parent.depth + 1
         self._children: Set[Requirement] = set()
@@ -47,8 +47,11 @@ class Requirement(requirements.Requirement):
                     return True
         return False
 
-    def parent(self):
+    def parent(self) -> Optional[Requirement]:
         return self._parent
+
+    def children(self) -> Set[Requirement]:
+        return self._children
 
     def ancestors(self) -> List[Requirement]:
         ancestors: List[Requirement] = []
