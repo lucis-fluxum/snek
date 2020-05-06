@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from packaging.markers import Marker
 
 from snek.requirement import Requirement
 from snek.resolver import Resolver
@@ -23,22 +22,29 @@ class TestResolver:
                               ('Flask[dev, docs, test]', FLASK_ALL_EXTRAS_GRAPH)])
     def test_single_resolve(self, mocker, req_str, expected_graph):
         mock_repository_json(mocker)
-        resolver = Resolver(Requirement(req_str))
-        dep_graph = resolver.resolve(stringify_keys=True)
+        resolver = Resolver()
+        dep_graph = resolver.resolve(Requirement(req_str), stringify_keys=True)
         assert dep_graph == expected_graph
 
     def test_multi_resolve(self, mocker):
         pytest.skip('TODO')
 
     def test_evaluate_extra(self):
-        resolver_no_extra = Resolver()
-        assert not resolver_no_extra.check_marker_for_extra(Marker("extra == 'dev'"))
-        resolver_one_extra = Resolver(extras={'dev'})
-        assert resolver_one_extra.check_marker_for_extra(Marker("extra == 'dev'"))
-        assert not resolver_one_extra.check_marker_for_extra(Marker("extra == 'another'"))
-        resolver_multi_extra = Resolver(extras={'dev', 'test', 'another'})
+        req_no_extras = Requirement('test')
+        req_one_extra = Requirement('test[dev]')
+        req_multi_extra = Requirement('test[dev, test, another]')
+
+        sub_req = Requirement("test2 ; extra == 'dev'", parent=req_no_extras)
+        assert Resolver.should_ignore(sub_req)
+
+        sub_req = Requirement("test2 ; extra == 'dev'", parent=req_one_extra)
+        assert not Resolver.should_ignore(sub_req)
+        sub_req = Requirement("test2 ; extra == 'another'", parent=req_one_extra)
+        assert Resolver.should_ignore(sub_req)
+
         for extra in ['dev', 'test', 'another']:
-            assert resolver_multi_extra.check_marker_for_extra(Marker(f"extra == '{extra}'"))
+            sub_req = Requirement(f"test2 ; extra == '{extra}'", parent=req_multi_extra)
+            assert not Resolver.should_ignore(sub_req)
 
     # TODO: Evaluate the marker when deciding exactly what to install
     # def test_evaluate_marker(self):
