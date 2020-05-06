@@ -1,7 +1,5 @@
 import logging
-from typing import Optional, Set, Dict, Union
-
-from packaging.markers import Marker
+from typing import Optional, Set, Dict, Union, List
 
 from snek import utils
 from snek.repository import Repository
@@ -63,67 +61,70 @@ class Resolver:
     the error from pip.
     """
 
-    def __init__(self, requirement: Optional[Requirement] = None, extras: Optional[Set[str]] = None,
-                 dependencies: Optional[Set[Requirement]] = None, repository: Optional[Repository] = None):
-        if extras is None:
-            extras: Set[str] = set()
-        if dependencies is None:
-            dependencies: Set[Requirement] = set()
+    def __init__(self, repository: Optional[Repository] = None):
         if repository is None:
             repository = Repository()
-
-        self.dependencies = dependencies
-        self._requirement = requirement
-        self._extras = extras
         self._repository = repository
-        if requirement:
-            self._extras: Set[str] = requirement.extras
 
-    def resolve(self, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
-        if self.dependencies:
-            graphs = parallel_map(lambda req: Resolver(req).resolve(stringify_keys=stringify_keys), self.dependencies)
-            result: Dict[Union[Requirement, str], Dict] = {}
-            [result.update(graph) for graph in graphs]
-            return result
-        else:
-            log.debug(f"Populating {self._requirement}")
-            self._repository.populate_requirement(self._requirement)
+    def resolve_many(self, requirements: Set[Requirement], stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
+        graphs = parallel_map(lambda req: self.resolve(req, stringify_keys=stringify_keys), requirements)
+        result: Dict[Union[Requirement, str], Dict] = {}
+        [result.update(graph) for graph in graphs]
+        return result
 
-            current_version = utils.convert_to_version(self._requirement.project_metadata['info']['version'])
-            if current_version != self._requirement.best_candidate_version:
-                self._requirement.project_metadata = self._repository.get_package_info(self._requirement.name,
-                                                                                       self._requirement.best_candidate_version)
-            requires_dist: list = self._requirement.project_metadata['info']['requires_dist']
+    def resolve(self, requirement: Requirement, stringify_keys=False) -> Dict[Union[Requirement, str], Dict]:
+        log.debug(f"Populating {requirement}")
 
-            if requires_dist and len(requires_dist) > 0:
-                parallel_map(self.resolve_sub_requirement, requires_dist)
+        # Grab metadata, list of compatible versions, and determine largest compatible version for the requirement
+        self._repository.populate_requirement(requirement)
+
+        current_version = utils.convert_to_version(requirement.project_metadata['info']['version'])
+
+        # If the metadata's current version is not the same as the largest compatible version, replace the metadata with
+        # that of the largest compatible version's metadata.
+        if current_version != requirement.best_candidate_version:
+            requirement.project_metadata = self._repository.get_package_info(requirement.name,
+                                                                             requirement.best_candidate_version)
+
+        # Grab sub-dependencies of the requirement from its metadata
+        requires_dist: Optional[List[str]] = requirement.project_metadata['info']['requires_dist']
+
+        if requires_dist and len(requires_dist) > 0:
+            sub_requirements = [Requirement(sub_req, parent=requirement) for sub_req in requires_dist]
+            parallel_map(self.resolve_sub_requirement, sub_requirements)
+
+        # TODO: Extract to a utility method?
         if stringify_keys:
-            return {str(self._requirement): self._requirement.descendants(stringify_keys=True)}
+            return {str(requirement): requirement.descendants(stringify_keys=True)}
         else:
-            return {self._requirement: self._requirement.descendants()}
+            return {requirement: requirement.descendants()}
 
-    def resolve_sub_requirement(self, sub_req_string):
-        sub_requirement = Requirement(sub_req_string, parent=self._requirement)
-
-        if not self.check_marker_for_extra(sub_requirement.marker):
+    def resolve_sub_requirement(self, sub_requirement: Requirement):
+        # Check extras on the sub-requirement in case we don't need it after all
+        if Resolver.should_ignore(sub_requirement):
             log.debug(f"Ignoring {sub_requirement}.")
-        elif sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
+            return
+
+        # Check for a circular dependency >:(
+        if sub_requirement.name in map(lambda r: r.name, sub_requirement.ancestors()):
             chain = reversed(list(map(str, sub_requirement.ancestors())))
             log.warning(
                 f"Circular dependency detected: {' -> '.join(chain)} -> {sub_requirement}")
             raise CircularDependencyError
-        else:
-            sub_resolver = Resolver(sub_requirement)
-            sub_resolver.resolve()
-            self._requirement.add_sub_requirement(sub_resolver._requirement)
 
-    def check_marker_for_extra(self, marker: Optional[Marker]) -> bool:
-        if 'extra' not in str(marker):
-            return True
-        for extra in self._extras:
-            if f"extra==\"{extra}\"" in str(marker).replace(' ', ''):
-                return True
-        return False
+        self.resolve(sub_requirement)
+        # Finalize the sub-requirement by adding it to the parent requirement
+        sub_requirement.parent().add_sub_requirement(sub_requirement)
+
+    @staticmethod
+    def should_ignore(sub_requirement: Requirement):
+        if 'extra' not in str(sub_requirement.marker):
+            return False
+
+        for extra in sub_requirement.parent().extras:
+            if f"extra==\"{extra}\"" in str(sub_requirement.marker).replace(' ', ''):
+                return False
+        return True
 
 
 if __name__ == '__main__':
@@ -131,7 +132,5 @@ if __name__ == '__main__':
     # Suppress debug messages from urllib3
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
-    resolver = Resolver(dependencies={Requirement('Flask[dev, docs]'), Requirement('jupyterlab[docs, test]')})
     import json
-
-    print(json.dumps(resolver.resolve(stringify_keys=True), sort_keys=True, indent=4))
+    print(json.dumps(Resolver().resolve(Requirement('docker-compose'), stringify_keys=True), sort_keys=True, indent=4))

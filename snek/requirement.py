@@ -51,6 +51,9 @@ class Requirement(requirements.Requirement):
                     return True
         return False
 
+    def parent(self):
+        return self._parent
+
     def ancestors(self) -> List[Requirement]:
         ancestors: List[Requirement] = []
         node = self
