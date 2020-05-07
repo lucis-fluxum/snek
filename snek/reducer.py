@@ -1,25 +1,51 @@
-import itertools
-from typing import Optional, Dict, Set, List
+import functools
+import logging
+from collections import defaultdict
+from typing import Dict, Set, Union
 
-from snek.repository import Repository
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version, LegacyVersion
+
 from snek.requirement import Requirement
+
+log = logging.getLogger(__name__)
+
+
+class ReductionError(RuntimeError):
+    pass
 
 
 class Reducer:
-    def __init__(self, repository: Optional[Repository] = None):
-        if repository is None:
-            repository = Repository()
-        self._repository = repository
-
-    def reduce(self, dependencies: Dict[Requirement, Dict]):
+    @staticmethod
+    def reduce(dependencies: Dict[Requirement, Dict]):
+        # Flatten the tree and pick only the requirements compatible with the current environment
         flattened_dependencies: Set[Requirement] = set(filter(Reducer.is_compatible, Reducer.flatten(dependencies)))
-        grouped_dependencies = itertools.groupby(flattened_dependencies, lambda req: req.name)
-        names: List[str] = []
-        groups: List[List[Requirement]] = []
-        for name, group in grouped_dependencies:
-            names.append(name)
-            groups.append(list(group))
-        return names, groups
+        # Group all versions of requirements by name
+        # TODO: Tried to use itertools.groupby here, but it ended up losing a bunch of the requirements somehow :(
+        grouped_dependencies = defaultdict(lambda: [])
+        [grouped_dependencies[dep.name].append(dep) for dep in flattened_dependencies]
+
+        # Combine the version specifiers for all the groups, then take the highest matching version
+        versions: dict = {}
+        for name, group in grouped_dependencies.items():
+            group = list(group)
+            specifier = functools.reduce(SpecifierSet.__and__, map(lambda r: r.specifier, group))
+            possible_versions: Set[Union[Version, LegacyVersion]] = set()
+            [possible_versions.add(version) for requirement in group for version in requirement.compatible_versions]
+            log.debug(f"{name}: specifier '{specifier}', possible versions: {possible_versions}")
+            filtered_versions = list(specifier.filter(possible_versions))
+            if filtered_versions:
+                versions[name] = max(filtered_versions)
+            else:
+                msg = f"Couldn't find a version for {name}. A dependency map is shown below:"
+                for requirement in group:
+                    chain = list(reversed(list(map(str, requirement.ancestors()))))
+                    if len(chain) > 0:
+                        msg += f"\n  {' -> '.join(chain)} -> {requirement}"
+                    else:
+                        msg += f"\n  {requirement}"
+                raise ReductionError(msg)
+        return versions
 
     @staticmethod
     def flatten(dependencies: Dict[Requirement, Dict]) -> Set[Requirement]:
@@ -49,6 +75,11 @@ if __name__ == '__main__':
     import pprint
     from snek.resolver import Resolver
 
+    logging.basicConfig(level=logging.DEBUG)
+    # Suppress debug messages from urllib3
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+
     resolver = Resolver()
-    reducer = Reducer()
-    pprint.pp(reducer.reduce(resolver.resolve_many({Requirement('Flask[dev]'), Requirement('docker-compose')})))
+    graph = resolver.resolve_many(
+        {Requirement('Flask'), Requirement('jupyterlab'), Requirement('tornado==6.0.2')})
+    pprint.pp(Reducer.reduce(graph))

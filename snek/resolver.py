@@ -15,6 +15,7 @@ class CircularDependencyError(RuntimeError):
     pass
 
 
+# TODO: Add a timeout when resolving dependencies to retry a parallel job, sometimes it just hangs
 # TODO: 'Actions' to perform install/uninstall/update/other tasks
 # TODO: Lock file so we don't need to resolve every time. Put a hash in the lockfile of the requirements
 #       manifest so we know when to expire it
