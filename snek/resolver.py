@@ -33,12 +33,14 @@ class Resolver:
 
     3. For each sub-requirement, starting at the largest compatible version, repeat this process of getting candidate
        versions recursively, until there are no more sub-requirements. If there are no compatible versions of any
-       sub-requirement, throw an error to change the best compatible version of its parent and try again. If there are
-       no more candidate versions in the parent, throw an error to change the best compatible version of the parent's
-       parent, and so on. If there are no more candidate versions to test at the top of the tree, throw another error.
+       sub-requirement, throw an error to change the best compatible version of its parent and try again. The subtree
+       rooted at the parent should be deleted at this point, and all threads populating the subtree's requirements
+       should exit. If there are no more candidate versions in the parent, throw an error to change the best compatible
+       version of the parent's parent, and so on. If there are no more candidate versions to test at the top of the
+       tree, throw another error.
 
-    4. While performing this process, it is possible to encounter a circular dependency, a sub-requirement with the same
-       package name as one elsewhere in the dependency tree. If this occurs:
+    4. While performing this process, it is possible to encounter a circular dependency, a sub-requirement that is a
+       descendant of a requirement with the same name. If this occurs:
          - Intersect the candidate versions for the new dependency with the candidate versions for the existing one. If
            there is at least one compatible version between them, then we can keep the dependency. Merge the specifier
            of the circular dependency with that of the existing one and remove the circular dependency from the tree.
