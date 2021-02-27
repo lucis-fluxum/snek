@@ -94,6 +94,8 @@ class Resolver:
 
         if requires_dist and len(requires_dist) > 0:
             sub_requirements = [Requirement(sub_req, parent=requirement) for sub_req in requires_dist]
+            # TODO: Catch errors thrown by resolving sub-dependencies here. Make sure to cancel other threads that are
+            #       still resolving sub-dependencies in the same subtree.
             parallel_map(self.resolve_sub_requirement, sub_requirements)
 
         # TODO: Extract to a utility method?
@@ -136,4 +138,4 @@ if __name__ == '__main__':
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
     import json
-    print(json.dumps(Resolver().resolve(Requirement('docker-compose'), stringify_keys=True), sort_keys=True, indent=4))
+    print(json.dumps(Resolver().resolve(Requirement('notebook'), stringify_keys=True), sort_keys=True, indent=4))
